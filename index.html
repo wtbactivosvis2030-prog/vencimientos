@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vencimientos RUC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>:root{color-scheme:light dark}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: barra superior azul marino, franja con título y cifras, y debajo un panel con pestañas (Agenda, Clientes, Mensaje). Referencias: azul marino con azul acero, grises neutros, mucho blanco y líneas finas, como en firmas legales y contables. */
+:root{
+  --bg:#F0F3F4; --surface:#FFFFFF; --ink:#16212B; --muted:#5B6B78; --line:#DCE3E8;
+  --navy:#0B2437; --navy-ink:#FFFFFF; --navy-muted:#A9BCCB; --navy-line:rgba(255,255,255,.16);
+  --accent:#0B5A8C; --accent-ink:#FFFFFF; --soft:#E4F0F8;
+  --warn-bg:#FBEBC8; --warn-ink:#6B4A00; --crit-bg:#F9D9D5; --crit-ink:#8A1F14; --ok-bg:#DCEFE0; --ok-ink:#1F5A2C;
+  --font-ui:"Heebo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --font-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A121A; --surface:#101C27; --ink:#E6EDF3; --muted:#93A5B3; --line:#223341;
+    --navy:#0E2233; --navy-ink:#FFFFFF; --navy-muted:#9DB2C3; --navy-line:rgba(255,255,255,.14);
+    --accent:#5DB2E6; --accent-ink:#06212F; --soft:#14354A;
+    --warn-bg:#3A2D0B; --warn-ink:#F2CF7A; --crit-bg:#451B17; --crit-ink:#F5B1A8; --ok-bg:#16361E; --ok-ink:#9DD8AA;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A121A; --surface:#101C27; --ink:#E6EDF3; --muted:#93A5B3; --line:#223341;
+  --navy:#0E2233; --navy-ink:#FFFFFF; --navy-muted:#9DB2C3; --navy-line:rgba(255,255,255,.14);
+  --accent:#5DB2E6; --accent-ink:#06212F; --soft:#14354A;
+  --warn-bg:#3A2D0B; --warn-ink:#F2CF7A; --crit-bg:#451B17; --crit-ink:#F5B1A8; --ok-bg:#16361E; --ok-ink:#9DD8AA;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;padding-bottom:48px}
+.inner{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{background:var(--navy);color:var(--navy-ink);border-bottom:1px solid var(--navy-line)}
+.top .inner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:13px;min-width:0}
+.mark{flex:none;width:26px;height:26px;border:1.5px solid var(--navy-ink);display:grid;place-items:center;font-family:var(--font-serif);font-weight:700;font-size:15px;letter-spacing:0}
+.brand span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top .tag{font-size:12.5px;color:var(--navy-muted);white-space:nowrap}
+.hero{background:var(--navy);color:var(--navy-ink)}
+.hero .inner{padding-block:28px 0}
+h1{font-family:var(--font-serif);font-size:clamp(28px,5vw,44px);line-height:1.08;margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.sub{margin:10px 0 0;color:var(--navy-muted);max-width:62ch}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:26px;border-top:1px solid var(--navy-line)}
+.stat{padding:16px 16px 18px 0;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat+.stat{padding-left:16px;border-left:1px solid var(--navy-line)}
+.stat b{font-family:var(--font-num);font-weight:600;font-size:clamp(26px,4vw,36px);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--navy-muted)}
+.stat.hot b{color:#FFB4A8}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(3){padding-left:0;border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--navy-line)}}
+main.inner{padding-block:24px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;min-width:0}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 8px;overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;border-radius:0;padding:13px 14px 11px;font-weight:600;color:var(--muted);margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:hover{color:var(--ink);border-color:transparent;border-bottom-color:var(--line)}
+.tabs button[aria-selected="true"]:hover{border-bottom-color:var(--accent)}
+.pane{padding:20px}
+@media (max-width:560px){.pane{padding:16px 12px}}
+label,.lbl{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+input[type=text],input[type=tel],select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:9px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:130px;line-height:1.45}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;font-weight:600}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover{filter:brightness(1.08)}
+button.ghost{border-color:transparent;color:var(--muted);padding:4px 8px;font-weight:500}
+button:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.toolbar .left,.toolbar .right{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink)}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);margin:0}
+.thead,.arow{display:grid;grid-template-columns:28px 112px minmax(0,1fr) 150px 140px 172px;gap:12px;align-items:center}
+.thead{padding:8px 10px;border-bottom:2px solid var(--ink);font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.arow{padding:12px 10px;border-bottom:1px solid var(--line)}
+.arow:hover{background:var(--soft)}
+.arow.picked{background:var(--soft)}
+.fecha{display:flex;align-items:baseline;gap:8px}
+.dnum{font-family:var(--font-num);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;line-height:1}
+.dtxt{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.cname{font-weight:600;overflow-wrap:anywhere}
+.sub2{font-size:12.5px;color:var(--muted)}
+.mono{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.chip{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;background:var(--soft);color:var(--accent);white-space:nowrap}
+.chip.hoy{background:var(--crit-bg);color:var(--crit-ink)}
+.chip.pronto{background:var(--warn-bg);color:var(--warn-ink)}
+.chip.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.chips{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+a.btn{display:inline-block;text-decoration:none;font-weight:600;border-radius:4px;padding:8px 14px;background:var(--accent);color:var(--accent-ink);font-size:14px;text-align:center}
+a.btn:hover{filter:brightness(1.08)}
+a.btn.line{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+@media (max-width:860px){
+  .thead{display:none}
+  .arow{grid-template-columns:28px minmax(0,1fr);row-gap:6px}
+  .arow>*:nth-child(n+3){grid-column:2}
+}
+.queue{border:1px solid var(--accent);border-radius:4px;background:var(--surface);margin-bottom:16px}
+.queue .qh{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.queue .qb{padding:14px;display:flex;flex-direction:column;gap:12px}
+.preview{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px;font-size:14px}
+.qa{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.bar{height:4px;background:var(--line)}
+.bar i{display:block;height:100%;background:var(--accent)}
+.empty{padding:36px 8px;text-align:center;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+h2{margin:0 0 12px;font-family:var(--font-serif);font-size:20px;font-weight:600}
+.form{display:flex;flex-direction:column;gap:12px}
+.err{min-height:1.2em;margin:0;font-size:13px;color:var(--crit-ink)}
+.note{margin:0 0 12px;padding:10px 12px;background:var(--warn-bg);color:var(--warn-ink);border-radius:4px;font-size:13px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}
+.clients{list-style:none;margin:0;padding:0}
+.clients li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.clients li:first-child{border-top:2px solid var(--ink)}
+.cmeta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12.5px;color:var(--muted)}
+.help{font-size:13.5px;color:var(--muted);max-width:70ch;margin:0 0 14px}
+.box{border-left:3px solid var(--accent);background:var(--soft);padding:12px 14px;font-size:13.5px;border-radius:0 4px 4px 0;max-width:80ch}
+.box p{margin:0 0 6px}.box p:last-child{margin:0}
+.foot{font-size:12.5px;color:var(--muted);max-width:90ch;margin:18px 0 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:4px;font-size:13px;font-weight:600}
+[hidden]{display:none!important}
+input[type=email],input[type=password],input[type=search]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:9px 10px;width:100%;min-width:0}
+input[type=email]:focus-visible,input[type=password]:focus-visible,input[type=search]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea.short{min-height:70px}
+.boot{padding:60px 16px;text-align:center;color:var(--muted)}
+#auth{min-height:100vh;background:var(--navy);color:var(--navy-ink);display:flex;flex-direction:column}
+.authwrap{max-width:1000px;margin:0 auto;width:100%;padding:36px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:56px;align-items:center;flex:1}
+.authside .brand{margin-bottom:28px}
+.authside ul{margin:22px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;color:var(--navy-muted);font-size:14.5px}
+.authside li{padding-left:18px;position:relative}
+.authside li:before{content:"";position:absolute;left:0;top:.62em;width:8px;height:1.5px;background:var(--navy-muted)}
+.authcard{padding:26px;color:var(--ink)}
+.authcard h2{margin-bottom:4px}
+.authcard .help{margin-bottom:6px}
+@media (max-width:820px){.authwrap{grid-template-columns:minmax(0,1fr);gap:28px;padding-top:24px}}
+.linkrow{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;margin-top:4px}
+button.link{background:none;border:0;padding:2px 0;color:var(--accent);font-weight:500;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+button.link:hover{border:0;filter:brightness(1.15)}
+.msg{min-height:1.2em;margin:0;font-size:13.5px}
+.msg.ok{color:var(--ok-ink);background:var(--ok-bg);padding:8px 10px;border-radius:4px}
+.msg.bad{color:var(--crit-ink)}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.who .nm{font-size:13px;color:var(--navy-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:28ch}
+.top button{background:transparent;color:var(--navy-ink);border-color:var(--navy-line);padding:5px 12px;font-size:13px}
+.top button:hover{border-color:var(--navy-ink)}
+.chip.demo{background:var(--warn-bg);color:var(--warn-ink)}
+.two.eq{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+@media (max-width:860px){.two.eq{grid-template-columns:minmax(0,1fr)}}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.cols2{grid-template-columns:minmax(0,1fr)}}
+.divider{border:0;border-top:1px solid var(--line);margin:18px 0}
+.acts{display:flex;flex-wrap:wrap;gap:2px 4px;flex:none;justify-content:flex-end}
+.clients li.arch .cname{color:var(--muted)}
+.clients li.confirm{background:var(--crit-bg);color:var(--crit-ink);padding:12px;flex-wrap:wrap}
+.clients li.confirm button.danger{background:var(--crit-ink);border-color:var(--crit-ink);color:var(--crit-bg)}
+.fhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.filters{display:flex;gap:10px;margin-bottom:12px}
+.filters .field:first-child{flex:1}
+.clients li{align-items:flex-start}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+
+<div id="boot" class="boot">Cargando…</div>
+
+<section id="auth" hidden>
+  <div class="authwrap">
+    <div class="authside">
+      <div class="brand"><div class="mark" aria-hidden="true">V</div><span>Vencimientos RUC</span></div>
+      <h1>Vencimientos tributarios de tus clientes</h1>
+      <p class="sub">Cronograma SUNAT 2026 por RUC y avisos por WhatsApp listos para enviar, en un solo lugar para tu estudio.</p>
+      <ul>
+        <li>Cartera de clientes con sus datos de contacto</li>
+        <li>Agenda de vencimientos según el último dígito del RUC</li>
+        <li>No se guarda ninguna clave SOL</li>
+      </ul>
+    </div>
+    <div class="card authcard">
+      <p class="note" id="demo-note" hidden>Modo demostración: la cuenta y los datos se guardan solo en este navegador y no se envía ningún correo real. La versión publicada con Supabase usa cuentas reales.</p>
+
+      <form id="f-login" class="form" novalidate>
+        <h2>Ingresar</h2>
+        <div class="field"><label for="l-email">Correo</label><input id="l-email" type="email" autocomplete="username" inputmode="email"></div>
+        <div class="field"><label for="l-pass">Contraseña</label><input id="l-pass" type="password" autocomplete="current-password"></div>
+        <button class="primary" type="submit">Ingresar</button>
+        <p class="msg" id="m-login" role="alert"></p>
+        <div class="linkrow"><button type="button" class="link" id="go-forgot">Olvidé mi contraseña</button><button type="button" class="link" id="go-reg">Crear cuenta</button></div>
+      </form>
+
+      <form id="f-reg" class="form" novalidate hidden>
+        <h2>Crear cuenta</h2>
+        <p class="help">Este correo será tu acceso y también recibirá el enlace si olvidas tu contraseña.</p>
+        <div class="field"><label for="r-email">Correo</label><input id="r-email" type="email" autocomplete="username" inputmode="email"></div>
+        <div class="field"><label for="r-pass">Contraseña (mínimo 8 caracteres)</label><input id="r-pass" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="r-pass2">Repite la contraseña</label><input id="r-pass2" type="password" autocomplete="new-password"></div>
+        <button class="primary" type="submit">Crear cuenta</button>
+        <p class="msg" id="m-reg" role="alert"></p>
+        <div class="linkrow"><button type="button" class="link" id="go-login1">Ya tengo cuenta</button></div>
+      </form>
+
+      <form id="f-forgot" class="form" novalidate hidden>
+        <h2>Recuperar contraseña</h2>
+        <p class="help">Escribe el correo con el que te registraste. Te enviaremos un enlace para crear una contraseña nueva.</p>
+        <div class="field"><label for="p-email">Correo</label><input id="p-email" type="email" autocomplete="username" inputmode="email"></div>
+        <button class="primary" type="submit">Enviar enlace</button>
+        <p class="msg" id="m-forgot" role="alert"></p>
+        <button type="button" id="sim-link" hidden>Simular clic en el enlace del correo (demostración)</button>
+        <div class="linkrow"><button type="button" class="link" id="go-login2">Volver a ingresar</button></div>
+      </form>
+
+      <form id="f-new" class="form" novalidate hidden>
+        <h2>Nueva contraseña</h2>
+        <p class="help">Crea una contraseña nueva para tu cuenta.</p>
+        <div class="field"><label for="n-pass">Contraseña nueva (mínimo 8 caracteres)</label><input id="n-pass" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="n-pass2">Repite la contraseña</label><input id="n-pass2" type="password" autocomplete="new-password"></div>
+        <button class="primary" type="submit">Guardar contraseña</button>
+        <p class="msg" id="m-new" role="alert"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="app" hidden>
+<header class="top">
+  <div class="inner">
+    <div class="brand"><div class="mark" aria-hidden="true">V</div><span id="brand">Estudio contable</span></div>
+    <div class="who"><span class="chip demo" id="demo-chip" hidden>Demo</span><span class="nm" id="who"></span><button type="button" id="logout">Salir</button></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="inner">
+    <h1>Vencimientos tributarios de tus clientes</h1>
+    <p class="sub">Cada RUC con su fecha según el cronograma de SUNAT 2026, y el aviso por WhatsApp listo para enviar.</p>
+    <div class="stats" id="strip" aria-live="polite"></div>
+  </div>
+</section>
+
+<main class="inner">
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="t-ag" aria-selected="true" aria-controls="p-ag">Agenda</button>
+      <button role="tab" id="t-cl" aria-selected="false" aria-controls="p-cl">Clientes</button>
+      <button role="tab" id="t-ms" aria-selected="false" aria-controls="p-ms">Mensaje y envío</button>
+      <button role="tab" id="t-cf" aria-selected="false" aria-controls="p-cf">Configuración</button>
+    </div>
+
+    <section class="pane" id="p-ag" role="tabpanel" aria-labelledby="t-ag">
+      <div class="toolbar">
+        <div class="left">
+          <div class="field">
+            <label for="horizon">Mostrar</label>
+            <select id="horizon">
+              <option value="7">Próximos 7 días</option>
+              <option value="15">Próximos 15 días</option>
+              <option value="30" selected>Próximos 30 días</option>
+              <option value="90">Próximos 90 días</option>
+              <option value="999">Todo el cronograma</option>
+            </select>
+          </div>
+        </div>
+        <div class="right">
+          <button type="button" id="selall">Seleccionar todos</button>
+          <button type="button" id="digest">Copiar resumen de 7 días</button>
+          <button type="button" class="primary" id="prep" disabled>Preparar avisos (0)</button>
+        </div>
+      </div>
+      <div id="queue" hidden></div>
+      <div class="thead" aria-hidden="true"><span></span><span>Fecha</span><span>Cliente</span><span>Periodo</span><span>Estado</span><span>Aviso</span></div>
+      <div id="agenda"></div>
+    </section>
+
+    <section class="pane" id="p-cl" role="tabpanel" aria-labelledby="t-cl" hidden>
+      <div class="two">
+        <form id="form" novalidate class="form">
+          <h2 id="form-title">Nuevo cliente</h2>
+          <div class="field"><label for="f-name">Razón social o nombre</label><input id="f-name" type="text" autocomplete="off"></div>
+          <div class="field"><label for="f-ruc">RUC (11 dígitos)</label><input id="f-ruc" type="text" inputmode="numeric" maxlength="11" autocomplete="off" class="mono"></div>
+          <label class="check" for="f-bc"><input id="f-bc" type="checkbox">Buen contribuyente o UESP</label>
+          <div class="field"><label for="f-contact">Persona de contacto (opcional)</label><input id="f-contact" type="text" autocomplete="off"></div>
+          <div class="field"><label for="f-phone">Celular WhatsApp (9 dígitos, opcional)</label><input id="f-phone" type="tel" inputmode="numeric" maxlength="9" autocomplete="off" class="mono"></div>
+          <div class="field"><label for="f-mail">Correo del cliente (opcional)</label><input id="f-mail" type="email" autocomplete="off" inputmode="email"></div>
+          <div class="field"><label for="f-notes">Notas (opcional)</label><textarea id="f-notes" class="short"></textarea></div>
+          <p class="sub2">Solo se guardan datos de contacto. No registres claves SOL ni contraseñas de tus clientes.</p>
+          <div class="btnrow"><button class="primary" type="submit" id="f-submit">Agregar cliente</button><button type="button" id="f-cancel" hidden>Cancelar edición</button></div>
+          <p class="err" id="err" role="alert"></p>
+        </form>
+        <div>
+          <div class="fhead"><h2>Cartera</h2><span class="sub2" id="c-count"></span></div>
+          <div class="filters">
+            <div class="field"><label for="c-search">Buscar</label><input id="c-search" type="search" placeholder="Nombre, RUC o contacto" autocomplete="off"></div>
+            <div class="field"><label for="c-filter">Mostrar</label><select id="c-filter"><option value="act">Activos</option><option value="arc">Archivados</option><option value="all">Todos</option></select></div>
+          </div>
+          <div id="sample-note"></div>
+          <ul class="clients" id="clients"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane" id="p-ms" role="tabpanel" aria-labelledby="t-ms" hidden>
+      <div class="two">
+        <div class="form">
+          <h2>Mensaje</h2>
+          <div class="field"><label for="tpl">Texto del aviso</label><textarea id="tpl"></textarea></div>
+          <p class="sub2">Se reemplazan {cliente}, {fecha}, {periodo}, {ruc}, {estudio}, {titular}, {cargo}, {telefono} y {firma} (titular, cargo y estudio juntos). Los datos del titular se editan en Configuración.</p>
+          <div class="btnrow"><button type="button" class="primary" id="tpl-save">Guardar mensaje</button><button type="button" id="tpl-reset">Restaurar texto original</button></div>
+          <p class="msg" id="m-tpl" role="status"></p>
+        </div>
+        <div>
+          <h2>Cómo se envían los avisos</h2>
+          <div class="box">
+            <p><b>Envío en cola, un toque por mensaje.</b> Selecciona varios vencimientos en la Agenda y pulsa "Preparar avisos". La app te lleva uno por uno: cada vez abres WhatsApp con el mensaje ya escrito y solo pulsas enviar.</p>
+            <p>La app no envía sola, y eso evita bloqueos de cuenta. Escribe solo a clientes que ya aceptaron recibir tus avisos.</p>
+            <p>Para enviar a todos de forma automática se necesita WhatsApp Business Platform (API) con plantillas aprobadas por Meta, a través de un proveedor autorizado. Tiene costo por mensaje y requiere consentimiento previo del cliente.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane" id="p-cf" role="tabpanel" aria-labelledby="t-cf" hidden>
+      <div class="two eq">
+        <form id="f-prof" class="form" novalidate>
+          <h2>Datos del titular</h2>
+          <p class="help">Quien usa el aplicativo. Estos datos forman la firma de los avisos a tus clientes.</p>
+          <div class="field"><label for="pf-titular">Nombre completo del titular</label><input id="pf-titular" type="text" autocomplete="name"></div>
+          <div class="cols2">
+            <div class="field"><label for="pf-cargo">Cargo</label><input id="pf-cargo" type="text" placeholder="Contador Público Colegiado" autocomplete="organization-title"></div>
+            <div class="field"><label for="pf-cole">N° de colegiatura (opcional)</label><input id="pf-cole" type="text" autocomplete="off"></div>
+          </div>
+          <div class="field"><label for="pf-estudio">Nombre del estudio</label><input id="pf-estudio" type="text" autocomplete="organization"></div>
+          <div class="cols2">
+            <div class="field"><label for="pf-ruc">RUC del estudio (opcional)</label><input id="pf-ruc" type="text" inputmode="numeric" maxlength="11" class="mono" autocomplete="off"></div>
+            <div class="field"><label for="pf-phone">Celular (9 dígitos)</label><input id="pf-phone" type="tel" inputmode="numeric" maxlength="9" class="mono" autocomplete="tel-national"></div>
+          </div>
+          <div class="field"><label for="pf-email">Correo de contacto del estudio</label><input id="pf-email" type="email" inputmode="email" autocomplete="off"></div>
+          <div class="field"><label for="pf-dir">Dirección o ciudad</label><input id="pf-dir" type="text" autocomplete="street-address"></div>
+          <div class="btnrow"><button class="primary" type="submit">Guardar datos</button></div>
+          <p class="msg" id="m-prof" role="status"></p>
+        </form>
+        <div class="form">
+          <h2>Cuenta de acceso</h2>
+          <p class="help">Correo de acceso actual: <b id="acc-email"></b></p>
+          <form id="f-newmail" class="form" novalidate>
+            <div class="field"><label for="a-email">Cambiar correo de acceso</label><input id="a-email" type="email" inputmode="email" autocomplete="off"></div>
+            <div class="btnrow"><button type="submit">Cambiar correo</button></div>
+            <p class="msg" id="m-mail" role="status"></p>
+          </form>
+          <hr class="divider">
+          <form id="f-newpass" class="form" novalidate>
+            <div class="field"><label for="c-pass">Contraseña nueva (mínimo 8 caracteres)</label><input id="c-pass" type="password" autocomplete="new-password"></div>
+            <div class="field"><label for="c-pass2">Repite la contraseña</label><input id="c-pass2" type="password" autocomplete="new-password"></div>
+            <div class="btnrow"><button type="submit">Cambiar contraseña</button></div>
+            <p class="msg" id="m-pass" role="status"></p>
+          </form>
+          <div class="box">
+            <p><b>Si olvidas tu contraseña</b>, en la pantalla de ingreso pulsa "Olvidé mi contraseña": llega un enlace al correo de acceso para crear una nueva.</p>
+            <p>Por eso conviene que el correo de acceso sea uno al que siempre tengas entrada.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <p class="foot">Fechas del cronograma de obligaciones mensuales 2026 de SUNAT (Anexo I de la R.S. 281-2022/SUNAT), periodos enero a diciembre 2026; diciembre vence en enero de 2027. Aún no hay fechas de 2027 cargadas. Verifica siempre en SUNAT Operaciones en Línea: una prórroga puede cambiar un plazo.</p>
+</main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+  // Configuración de Supabase. Déjalas vacías para el modo demostración (datos solo en este navegador).
+  var SUPABASE_URL="https://flgmqicxrphpaqbwfoin.supabase.co";
+  var SUPABASE_KEY="sb_publishable_3YPkBHunbPiHTN415Vxuwg_hWmPO7se";
+  var DEMO=!(SUPABASE_URL&&SUPABASE_KEY);
+  var MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","setiembre","octubre","noviembre","diciembre"];
+  // Cada fila es un periodo de 2026 (enero a diciembre). Columnas: dígito 0, 1, 2-3, 4-5, 6-7, 8-9, buenos contribuyentes y UESP.
+  var CRON=[
+    ["2026-02-16","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-23","2026-02-24"],
+    ["2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24"],
+    ["2026-04-17","2026-04-20","2026-04-21","2026-04-22","2026-04-23","2026-04-24","2026-04-27"],
+    ["2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-25","2026-05-26"],
+    ["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19","2026-06-22","2026-06-23"],
+    ["2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-24"],
+    ["2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26"],
+    ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23"],
+    ["2026-10-16","2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26"],
+    ["2026-11-16","2026-11-17","2026-11-18","2026-11-19","2026-11-20","2026-11-23","2026-11-24"],
+    ["2026-12-17","2026-12-18","2026-12-21","2026-12-22","2026-12-23","2026-12-24","2026-12-28"],
+    ["2027-01-18","2027-01-19","2027-01-20","2027-01-21","2027-01-22","2027-01-25","2027-01-26"]
+  ];
+  var COLS=["0","1","2 y 3","4 y 5","6 y 7","8 y 9","Buen contribuyente"];
+  var TPL_DEFAULT="Hola {cliente}, le escribe {estudio}. Le recordamos que el {fecha} vence la declaración y pago de sus obligaciones mensuales del periodo {periodo} (RUC {ruc}). Por favor envíenos sus comprobantes de compras y ventas a tiempo.\n\nAtentamente,\n{firma}";
+  var SAMPLES=[
+    {id:"e1",name:"Ejemplo A: Comercial Andina",ruc:"20000000061",phone:"",bc:false,contact:"",email:"",notes:"",active:true,sample:true},
+    {id:"e2",name:"Ejemplo B: Servicios Altiplano",ruc:"20000000052",phone:"",bc:false,contact:"",email:"",notes:"",active:true,sample:true},
+    {id:"e3",name:"Ejemplo C: Transportes del Sur",ruc:"20000000087",phone:"",bc:false,contact:"",email:"",notes:"",active:true,sample:true},
+    {id:"e4",name:"Ejemplo D: Persona natural",ruc:"10000000090",phone:"",bc:true,contact:"",email:"",notes:"",active:true,sample:true}
+  ];
+  var $=function(id){return document.getElementById(id)};
+  var S={user:null,profile:{},tpl:TPL_DEFAULT,clients:[],sent:{}};
+  var sel={},queue={active:false,items:[],i:0};
+  var editingId=null,confirmDel=null,recovering=false,appShown=false,linkErr=false;
+  var BASE=location.origin+location.pathname;
+
+  /* ---------- utilidades ---------- */
+  function h(tag,attrs,kids){
+    var el=document.createElement(tag),k;
+    if(attrs)for(k in attrs){if(k==="text")el.textContent=attrs[k];else if(k==="class")el.className=attrs[k];else el.setAttribute(k,attrs[k])}
+    (kids||[]).forEach(function(c){el.appendChild(typeof c==="string"?document.createTextNode(c):c)});
+    return el;
+  }
+  function tr(e){
+    var m=((e&&e.message)||"")+" "+((e&&e.code)||"");
+    if(/Invalid login/i.test(m))return "Correo o contraseña incorrectos.";
+    if(/not confirmed/i.test(m))return "Aún no confirmas tu correo. Abre el mensaje que te enviamos y pulsa el enlace.";
+    if(/already registered|exists/i.test(m))return "Ese correo ya tiene una cuenta. Ingresa o recupera tu contraseña.";
+    if(/rate limit|too many|over_email|security purposes/i.test(m))return "Se alcanzó el límite de correos o intentos. Espera unos minutos e inténtalo otra vez.";
+    if(/23505|duplicate/i.test(m))return "Ese RUC ya está en tu cartera.";
+    if(/same password|different from the old/i.test(m))return "La nueva contraseña debe ser distinta a la anterior.";
+    if(/weak|at least/i.test(m))return "La contraseña es muy débil. Usa 8 caracteres o más.";
+    if(/42P01|PGRST205|does not exist|schema cache/i.test(m))return "Faltan las tablas en Supabase. Ejecuta el archivo supabase.sql.";
+    if(/Failed to fetch|network|lib/i.test(m))return "No hay conexión con el servidor. Revisa tu internet.";
+    return "No se pudo completar la acción. Inténtalo de nuevo.";
+  }
+  function setMsg(id,t,kind){var el=$(id);el.textContent=t||"";el.className="msg"+(t&&kind?" "+kind:"")}
+  function busy(btn,p){
+    if(btn)btn.disabled=true;
+    var done=function(){if(btn)btn.disabled=false};
+    p.then(done,done);return p;
+  }
+  function okEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)}
+  function validRuc(r){
+    if(!/^\d{11}$/.test(r))return false;
+    if(["10","15","16","17","20"].indexOf(r.slice(0,2))<0)return false;
+    var w=[5,4,3,2,7,6,5,4,3,2],s=0,i;
+    for(i=0;i<10;i++)s+=(+r[i])*w[i];
+    var x=11-(s%11);if(x===10)x=0;if(x===11)x=1;
+    return x===+r[10];
+  }
+  function toast(t){var el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){el.hidden=true},2400)}
+
+  /* ---------- acceso a datos: modo demostración ---------- */
+  var Demo=(function(){
+    var cb=null,pending=null,cur=null,mem={};
+    function get(k){try{var v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return mem[k]===undefined?null:JSON.parse(JSON.stringify(mem[k]))}
+    function set(k,v){mem[k]=JSON.parse(JSON.stringify(v));try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+    function hash(s){var x=5381,i;for(i=0;i<s.length;i++)x=((x<<5)+x+s.charCodeAt(i))|0;return String(x)}
+    function users(){return get("venc-demo-users")||{}}
+    function data(){var d=get("venc-demo-data:"+cur);if(!d){d={profile:{},tpl:null,clients:JSON.parse(JSON.stringify(SAMPLES)),sent:{}};set("venc-demo-data:"+cur,d)}return d}
+    function put(d){set("venc-demo-data:"+cur,d)}
+    function ok(v){return Promise.resolve(v)}
+    function bad(m){return Promise.reject(new Error(m))}
+    return {
+      init:function(fn){cb=fn;var em=get("venc-demo-session");cur=em;setTimeout(function(){fn(em?"in":"out",em?{id:em,email:em}:null)},0)},
+      signUp:function(email,pass){
+        var u=users();if(u[email])return bad("exists");
+        u[email]=hash(pass);set("venc-demo-users",u);set("venc-demo-session",email);cur=email;
+        return ok({needsConfirm:false}).then(function(r){cb("in",{id:email,email:email});return r});
+      },
+      signIn:function(email,pass){
+        var u=users();if(!u[email]||u[email]!==hash(pass))return bad("Invalid login credentials");
+        set("venc-demo-session",email);cur=email;cb("in",{id:email,email:email});return ok();
+      },
+      signOut:function(){set("venc-demo-session",null);cur=null;cb("out",null);return ok()},
+      reset:function(email){pending=email;return ok()},
+      simulateLink:function(){var u=users();if(pending&&u[pending]){cur=pending;cb("recovery",{id:pending,email:pending})}else{cb("out",null)}},
+      setPassword:function(pass){var u=users();u[cur]=hash(pass);set("venc-demo-users",u);set("venc-demo-session",cur);return ok()},
+      setEmail:function(email){
+        var u=users();if(u[email])return bad("exists");
+        u[email]=u[cur];delete u[cur];set("venc-demo-users",u);
+        var d=data();set("venc-demo-data:"+email,d);set("venc-demo-session",email);cur=email;
+        return ok({pending:false,email:email});
+      },
+      loadAll:function(){var d=data();return ok({profile:d.profile||{},tpl:d.tpl,clients:d.clients,sent:d.sent||{}})},
+      saveProfile:function(p,tpl){var d=data();d.profile=p;d.tpl=tpl;put(d);return ok()},
+      saveClient:function(c){
+        var d=data(),i;c=JSON.parse(JSON.stringify(c));
+        if(!c.id){c.id="c"+Date.now()+Math.floor(Math.random()*1000);d.clients.push(c)}
+        else{for(i=0;i<d.clients.length;i++)if(d.clients[i].id===c.id)d.clients[i]=c}
+        put(d);return ok(c);
+      },
+      deleteClient:function(c){
+        var d=data();d.clients=d.clients.filter(function(x){return x.id!==c.id});
+        Object.keys(d.sent).forEach(function(k){if(k.indexOf(c.ruc+"|")===0)delete d.sent[k]});
+        put(d);return ok();
+      },
+      markSent:function(key,iso){var d=data();d.sent[key]=iso;put(d);return ok()}
+    };
+  })();
+
+  /* ---------- acceso a datos: Supabase ---------- */
+  var Sb=(function(){
+    var sb=null,uid=null;
+    function lib(){return new Promise(function(res,rej){
+      if(window.supabase)return res();
+      var s=document.createElement("script");
+      s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
+      s.onload=function(){res()};s.onerror=function(){rej(new Error("lib"))};
+      document.head.appendChild(s);
+    })}
+    function chk(r){if(r.error)throw r.error;return r.data}
+    function fromDb(r){return {id:r.id,name:r.nombre,ruc:r.ruc,phone:r.celular||"",bc:!!r.buen_contribuyente,contact:r.contacto||"",email:r.email||"",notes:r.notas||"",active:r.activo!==false}}
+    function toDb(c){return {nombre:c.name,ruc:c.ruc,celular:c.phone||null,buen_contribuyente:!!c.bc,contacto:c.contact||null,email:c.email||null,notas:c.notes||null,activo:c.active!==false}}
+    return {
+      init:function(fn){
+        lib().then(function(){
+          sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+          sb.auth.onAuthStateChange(function(ev,ses){
+            // se difiere para no llamar a Supabase dentro del propio callback
+            setTimeout(function(){
+              var u=ses&&ses.user?{id:ses.user.id,email:ses.user.email}:null;
+              if(u)uid=u.id;
+              if(ev==="PASSWORD_RECOVERY")fn("recovery",u);
+              else if(ev==="SIGNED_OUT")fn("out",null);
+              else if(ev==="INITIAL_SESSION"||ev==="SIGNED_IN")fn(u?"in":"out",u);
+            },0);
+          });
+        }).catch(function(e){fn("error",null,e)});
+      },
+      signUp:function(email,pass){return sb.auth.signUp({email:email,password:pass,options:{emailRedirectTo:BASE}}).then(function(r){if(r.error)throw r.error;return {needsConfirm:!r.data.session}})},
+      signIn:function(email,pass){return sb.auth.signInWithPassword({email:email,password:pass}).then(chk)},
+      signOut:function(){return sb.auth.signOut().then(chk)},
+      reset:function(email){return sb.auth.resetPasswordForEmail(email,{redirectTo:BASE}).then(chk)},
+      setPassword:function(pass){return sb.auth.updateUser({password:pass}).then(chk)},
+      setEmail:function(email){return sb.auth.updateUser({email:email},{emailRedirectTo:BASE}).then(function(r){if(r.error)throw r.error;return {pending:true,email:email}})},
+      loadAll:function(){
+        return Promise.all([
+          sb.from("profiles").select("*").maybeSingle(),
+          sb.from("clientes").select("*").order("nombre"),
+          sb.from("avisos").select("clave,enviado_at")
+        ]).then(function(r){
+          var p=chk(r[0])||{},cl=chk(r[1])||[],av=chk(r[2])||[],sent={};
+          av.forEach(function(a){sent[a.clave]=a.enviado_at});
+          return {
+            profile:{titular:p.titular||"",cargo:p.cargo||"",estudio:p.estudio||"",ruc:p.ruc_estudio||"",cole:p.colegiatura||"",phone:p.celular||"",email:p.correo_contacto||"",dir:p.direccion||""},
+            tpl:p.plantilla||null,clients:cl.map(fromDb),sent:sent
+          };
+        });
+      },
+      saveProfile:function(p,tpl){
+        return sb.from("profiles").upsert({id:uid,titular:p.titular||null,cargo:p.cargo||null,estudio:p.estudio||null,ruc_estudio:p.ruc||null,colegiatura:p.cole||null,celular:p.phone||null,correo_contacto:p.email||null,direccion:p.dir||null,plantilla:tpl===TPL_DEFAULT?null:tpl,updated_at:new Date().toISOString()}).then(chk);
+      },
+      saveClient:function(c){
+        var q=c.id?sb.from("clientes").update(toDb(c)).eq("id",c.id):sb.from("clientes").insert(toDb(c));
+        return q.select().single().then(function(r){return fromDb(chk(r))});
+      },
+      deleteClient:function(c){
+        return sb.from("avisos").delete().like("clave",c.ruc+"|%").then(chk).then(function(){return sb.from("clientes").delete().eq("id",c.id)}).then(chk);
+      },
+      markSent:function(key,iso){return sb.from("avisos").upsert([{user_id:uid,clave:key,enviado_at:iso}],{onConflict:"user_id,clave"}).then(chk)}
+    };
+  })();
+  var A=DEMO?Demo:Sb;
+
+  /* ---------- fechas, mensajes y agenda ---------- */
+  function colIndex(c){if(c.bc)return 6;var d=+c.ruc.slice(-1);return d<=1?d:Math.floor(d/2)+1}
+  function parse(iso){var p=iso.split("-");return new Date(+p[0],+p[1]-1,+p[2])}
+  function today(){var n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+  function diffDays(a,b){return Math.round((b-a)/864e5)}
+  function fmtDate(d){return d.toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+  function periodoTxt(i){return MESES[i]+" 2026"}
+  function keyOf(it){return it.c.ruc+"|"+it.per}
+  function nm(c){return c.name.replace(/^Ejemplo [A-Z]: /,"")}
+  function firma(){var p=S.profile;return [p.titular,p.cargo,p.estudio].filter(Boolean).join(", ")}
+  function rep(s,k,v){return s.split("{"+k+"}").join(v)}
+  function msg(c,iso,per){
+    var p=S.profile,t=S.tpl||TPL_DEFAULT;
+    t=rep(t,"cliente",nm(c));t=rep(t,"fecha",fmtDate(parse(iso)));t=rep(t,"periodo",periodoTxt(per));
+    t=rep(t,"ruc",c.ruc);t=rep(t,"estudio",p.estudio||"su estudio contable");
+    t=rep(t,"titular",p.titular||"");t=rep(t,"cargo",p.cargo||"");t=rep(t,"telefono",p.phone||"");t=rep(t,"firma",firma());
+    return t;
+  }
+  function waLink(it){return "https://wa.me/51"+it.c.phone+"?text="+encodeURIComponent(msg(it.c,it.iso,it.per))}
+  function activeClients(){return S.clients.filter(function(c){return c.active!==false})}
+  function items(){
+    var t=today(),out=[];
+    activeClients().forEach(function(c){
+      var ci=colIndex(c);
+      CRON.forEach(function(row,per){
+        var iso=row[ci],d=diffDays(t,parse(iso));
+        if(d>=0)out.push({c:c,iso:iso,per:per,d:d});
+      });
+    });
+    out.sort(function(a,b){return a.iso<b.iso?-1:a.iso>b.iso?1:a.c.name.localeCompare(b.c.name)});
+    return out;
+  }
+  function chipFor(d){
+    if(d===0)return h("span",{class:"chip hoy",text:"Vence hoy"});
+    if(d===1)return h("span",{class:"chip pronto",text:"Mañana"});
+    if(d<=3)return h("span",{class:"chip pronto",text:"En "+d+" días"});
+    return h("span",{class:"chip",text:"En "+d+" días"});
+  }
+  function visible(all){var hz=+$("horizon").value;return all.filter(function(i){return i.d<=hz})}
+  function markSent(key){var iso=new Date().toISOString();S.sent[key]=iso;A.markSent(key,iso).catch(function(){toast("No se pudo guardar el estado del aviso")})}
+
+  /* ---------- pantallas ---------- */
+  function renderStrip(all){
+    var hoy=all.filter(function(i){return i.d===0}).length,
+        s7=all.filter(function(i){return i.d<=7}).length,
+        s30=all.filter(function(i){return i.d<=30}).length;
+    var st=$("strip");st.textContent="";
+    [["hot",hoy,"Vencen hoy"],["",s7,"En 7 días"],["",s30,"En 30 días"],["",activeClients().length,"Clientes activos"]].forEach(function(x){
+      st.appendChild(h("div",{class:"stat "+x[0]},[h("b",{text:String(x[1])}),h("span",{text:x[2]})]));
+    });
+  }
+  function matches(c){
+    var f=$("c-filter").value,q=$("c-search").value.trim().toLowerCase();
+    if(f==="act"&&c.active===false)return false;
+    if(f==="arc"&&c.active!==false)return false;
+    if(!q)return true;
+    return (c.name+" "+c.ruc+" "+(c.contact||"")).toLowerCase().indexOf(q)>=0;
+  }
+  function save(c,okText){
+    return A.saveClient(c).then(function(saved){
+      var i=-1;S.clients.forEach(function(x,k){if(x.id===saved.id)i=k});
+      if(i>=0)S.clients[i]=saved;else S.clients.push(saved);
+      S.clients.sort(function(a,b){return a.name.localeCompare(b.name)});
+      if(okText)toast(okText);
+      return saved;
+    });
+  }
+  function renderClients(){
+    var ul=$("clients");ul.textContent="";
+    var n=$("sample-note");n.textContent="";
+    if(DEMO&&S.clients.some(function(c){return c.sample})){
+      var b=h("button",{type:"button",class:"ghost",text:"Quitar ejemplos"});
+      b.addEventListener("click",function(){
+        var l=S.clients.filter(function(c){return c.sample});
+        Promise.all(l.map(function(c){return A.deleteClient(c)})).then(function(){
+          S.clients=S.clients.filter(function(c){return !c.sample});render();
+        });
+      });
+      n.appendChild(h("p",{class:"note"},[h("span",{text:"Los clientes marcados como ejemplo son datos de prueba."}),b]));
+    }
+    var list=S.clients.filter(matches);
+    $("c-count").textContent=activeClients().length+" activos de "+S.clients.length;
+    if(!list.length){
+      ul.appendChild(h("li",{},[h("span",{class:"sub2",text:S.clients.length?"Ningún cliente coincide con la búsqueda.":"Aún no hay clientes. Agrega el primero en el formulario."})]));
+      return;
+    }
+    list.forEach(function(c){
+      if(confirmDel===c.id){
+        var yes=h("button",{type:"button",class:"danger",text:"Sí, eliminar"});
+        yes.addEventListener("click",function(){
+          busy(yes,A.deleteClient(c).then(function(){
+            S.clients=S.clients.filter(function(x){return x.id!==c.id});
+            Object.keys(S.sent).forEach(function(k){if(k.indexOf(c.ruc+"|")===0)delete S.sent[k]});
+            Object.keys(sel).forEach(function(k){if(k.indexOf(c.ruc+"|")===0)delete sel[k]});
+            confirmDel=null;if(editingId===c.id)stopEdit();
+            render();toast("Cliente eliminado");
+          }).catch(function(e){toast(tr(e))}));
+        });
+        var no=h("button",{type:"button",text:"Cancelar"});
+        no.addEventListener("click",function(){confirmDel=null;renderClients()});
+        ul.appendChild(h("li",{class:"confirm"},[
+          h("span",{text:"¿Eliminar a "+nm(c)+"? Se borran también sus avisos registrados y no se puede deshacer."}),
+          h("span",{class:"acts"},[yes,no])
+        ]));
+        return;
+      }
+      var ed=h("button",{type:"button",class:"ghost","aria-label":"Editar "+nm(c),text:"Editar"});
+      ed.addEventListener("click",function(){startEdit(c)});
+      var ar=h("button",{type:"button",class:"ghost","aria-label":(c.active===false?"Reactivar ":"Archivar ")+nm(c),text:c.active===false?"Reactivar":"Archivar"});
+      ar.addEventListener("click",function(){
+        var upd=JSON.parse(JSON.stringify(c));upd.active=c.active===false;
+        busy(ar,save(upd,upd.active?"Cliente reactivado":"Cliente archivado").then(render).catch(function(e){toast(tr(e))}));
+      });
+      var rm=h("button",{type:"button",class:"ghost","aria-label":"Eliminar "+nm(c),text:"Eliminar"});
+      rm.addEventListener("click",function(){confirmDel=c.id;renderClients()});
+      var meta=[h("span",{class:"mono",text:c.ruc}),h("span",{text:c.bc?"Buen contribuyente":"Dígito "+c.ruc.slice(-1)+", columna "+COLS[colIndex(c)]}),h("span",{text:c.phone?"WhatsApp "+c.phone:"Sin celular"})];
+      if(c.contact)meta.push(h("span",{text:"Contacto: "+c.contact}));
+      if(c.email)meta.push(h("span",{text:c.email}));
+      var left=[h("div",{class:"cname",text:c.name}),h("div",{class:"cmeta"},meta)];
+      if(c.notes)left.push(h("div",{class:"sub2",text:c.notes}));
+      var nameLine=left[0];
+      if(c.active===false)nameLine.appendChild(h("span",{class:"chip",style:"margin-left:8px",text:"Archivado"}));
+      ul.appendChild(h("li",{class:c.active===false?"arch":""},[h("div",{style:"min-width:0"},left),h("div",{class:"acts"},[ed,ar,rm])]));
+    });
+  }
+  function renderAgenda(all){
+    var list=visible(all),box=$("agenda");
+    box.textContent="";
+    if(!list.length){
+      box.appendChild(h("div",{class:"empty",text:activeClients().length?"No hay vencimientos en este plazo para tus clientes.":"Agrega clientes en la pestaña Clientes para ver sus vencimientos."}));
+    }
+    list.forEach(function(it){
+      var k=keyOf(it),has=!!it.c.phone,d=parse(it.iso);
+      var cb=h("input",{type:"checkbox","aria-label":"Seleccionar "+nm(it.c)+" "+periodoTxt(it.per)});
+      cb.checked=!!sel[k];cb.disabled=!has;
+      cb.addEventListener("change",function(){if(cb.checked)sel[k]=true;else delete sel[k];renderAgenda(items())});
+      var estado=h("div",{class:"chips"},[chipFor(it.d)]);
+      if(S.sent[k])estado.appendChild(h("span",{class:"chip ok",text:"Aviso abierto"}));
+      var action=has?h("a",{class:"btn"+(S.sent[k]?" line":""),target:"_blank",rel:"noopener",href:waLink(it),text:S.sent[k]?"Avisar de nuevo":"Avisar por WhatsApp"}):h("span",{class:"sub2",text:"Falta el celular"});
+      if(has)action.addEventListener("click",function(){markSent(k);setTimeout(function(){renderAgenda(items())},300)});
+      box.appendChild(h("div",{class:"arow"+(sel[k]?" picked":"")},[
+        cb,
+        h("div",{class:"fecha"},[h("span",{class:"dnum",text:String(d.getDate())}),h("span",{class:"dtxt",text:(d.toLocaleDateString("es-PE",{weekday:"short"})+" · "+d.toLocaleDateString("es-PE",{month:"short"})).replace(/\./g,"")})]),
+        h("div",{},[h("div",{class:"cname",text:nm(it.c)}),h("div",{class:"sub2 mono",text:"RUC "+it.c.ruc})]),
+        h("div",{class:"sub2",text:"Periodo "+periodoTxt(it.per)}),
+        estado,action
+      ]));
+    });
+    updatePrep();
+  }
+  function selectable(){return visible(items()).filter(function(i){return i.c.phone})}
+  function updatePrep(){
+    var n=Object.keys(sel).length,p=$("prep");
+    p.textContent="Preparar avisos ("+n+")";p.disabled=n===0;
+    var total=selectable().length;
+    $("selall").textContent=(n>0&&n>=total)?"Quitar selección":"Seleccionar todos"+(total?" ("+total+")":"");
+    $("selall").disabled=total===0;
+  }
+  function renderQueue(){
+    var q=$("queue");q.textContent="";
+    if(!queue.active){q.hidden=true;return}
+    q.hidden=false;
+    var box=h("div",{class:"queue"}),total=queue.items.length;
+    if(queue.i>=total){
+      box.appendChild(h("div",{class:"qh"},[h("span",{text:"Cola terminada"}),h("span",{text:total+" de "+total})]));
+      var close=h("button",{type:"button",class:"primary",text:"Cerrar"});
+      close.addEventListener("click",function(){queue.active=false;sel={};render()});
+      box.appendChild(h("div",{class:"qb"},[h("div",{text:"Abriste WhatsApp para los "+total+" avisos. Los vencimientos quedan marcados como \"Aviso abierto\"."}),h("div",{class:"qa"},[close])]));
+      q.appendChild(box);return;
+    }
+    var it=queue.items[queue.i];
+    box.appendChild(h("div",{class:"qh"},[h("span",{text:"Aviso "+(queue.i+1)+" de "+total}),h("span",{class:"mono",text:nm(it.c)})]));
+    box.appendChild(h("div",{class:"bar"},[h("i",{style:"width:"+Math.round(queue.i/total*100)+"%"})]));
+    var open=h("a",{class:"btn",target:"_blank",rel:"noopener",href:waLink(it),text:"Abrir WhatsApp"});
+    open.addEventListener("click",function(){markSent(keyOf(it));setTimeout(function(){queue.i++;render()},400)});
+    var skip=h("button",{type:"button",text:"Omitir"});
+    skip.addEventListener("click",function(){queue.i++;renderQueue()});
+    var stop=h("button",{type:"button",class:"ghost",text:"Cancelar cola"});
+    stop.addEventListener("click",function(){queue.active=false;renderQueue()});
+    box.appendChild(h("div",{class:"qb"},[
+      h("div",{class:"sub2",text:"Para "+it.c.phone+", vence el "+fmtDate(parse(it.iso))}),
+      h("div",{class:"preview",text:msg(it.c,it.iso,it.per)}),
+      h("div",{class:"qa"},[open,skip,stop])
+    ]));
+    q.appendChild(box);
+  }
+  function render(){
+    var all=items();renderStrip(all);renderClients();renderAgenda(all);renderQueue();
+    $("brand").textContent=S.profile.estudio||"Estudio contable";
+    $("who").textContent=S.profile.titular||(S.user?S.user.email:"");
+    $("acc-email").textContent=S.user?S.user.email:"";
+  }
+  function showTab(name){
+    ["ag","cl","ms","cf"].forEach(function(t){
+      var on=t===name;$("t-"+t).setAttribute("aria-selected",on?"true":"false");$("p-"+t).hidden=!on;
+    });
+  }
+  ["ag","cl","ms","cf"].forEach(function(n){$("t-"+n).addEventListener("click",function(){showTab(n)})});
+
+  /* ---------- clientes: alta y edición ---------- */
+  function startEdit(c){
+    editingId=c.id;
+    $("form-title").textContent="Editar cliente";$("f-submit").textContent="Guardar cambios";$("f-cancel").hidden=false;
+    $("f-name").value=c.name;$("f-ruc").value=c.ruc;$("f-bc").checked=!!c.bc;$("f-contact").value=c.contact||"";
+    $("f-phone").value=c.phone||"";$("f-mail").value=c.email||"";$("f-notes").value=c.notes||"";$("err").textContent="";
+    showTab("cl");$("form").scrollIntoView({block:"nearest"});$("f-name").focus();
+  }
+  function stopEdit(){
+    editingId=null;$("form").reset();$("form-title").textContent="Nuevo cliente";$("f-submit").textContent="Agregar cliente";$("f-cancel").hidden=true;$("err").textContent="";
+  }
+  $("f-cancel").addEventListener("click",stopEdit);
+  $("form").addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("f-name").value.trim(),ruc=$("f-ruc").value.replace(/\s/g,""),phone=$("f-phone").value.replace(/\s/g,""),mail=$("f-mail").value.trim(),err=$("err");
+    if(!name){err.textContent="Escribe el nombre del cliente.";return}
+    if(!validRuc(ruc)){err.textContent="El RUC no es válido. Revisa que tenga 11 dígitos y que empiece con 10, 15, 16, 17 o 20.";return}
+    if(phone&&!/^9\d{8}$/.test(phone)){err.textContent="El celular debe tener 9 dígitos y empezar con 9.";return}
+    if(mail&&!okEmail(mail)){err.textContent="El correo del cliente no parece válido.";return}
+    if(S.clients.some(function(c){return c.ruc===ruc&&c.id!==editingId})){err.textContent="Ese RUC ya está en tu cartera.";return}
+    err.textContent="";
+    var prev=null;S.clients.forEach(function(c){if(c.id===editingId)prev=c});
+    var c={name:name,ruc:ruc,phone:phone,bc:$("f-bc").checked,contact:$("f-contact").value.trim(),email:mail,notes:$("f-notes").value.trim(),active:prev?prev.active!==false:true};
+    if(editingId)c.id=editingId;
+    var wasEdit=!!editingId;
+    busy($("f-submit"),save(c,wasEdit?"Cambios guardados":"Cliente agregado").then(function(){
+      // si cambió el RUC, los avisos registrados del RUC anterior ya no aplican
+      stopEdit();render();$("f-name").focus();
+    }).catch(function(e2){err.textContent=tr(e2)}));
+  });
+  $("c-search").addEventListener("input",renderClients);
+  $("c-filter").addEventListener("change",renderClients);
+
+  /* ---------- agenda ---------- */
+  $("horizon").addEventListener("change",function(){sel={};renderAgenda(items())});
+  $("selall").addEventListener("click",function(){
+    var l=selectable(),all=Object.keys(sel).length>=l.length&&l.length>0;
+    sel={};if(!all)l.forEach(function(i){sel[keyOf(i)]=true});
+    renderAgenda(items());
+  });
+  $("prep").addEventListener("click",function(){
+    var l=selectable().filter(function(i){return sel[keyOf(i)]});
+    if(!l.length)return;
+    queue={active:true,items:l,i:0};renderQueue();
+    $("queue").scrollIntoView({block:"nearest"});
+  });
+  function copy(text){
+    function fallback(){toast("No se pudo copiar. Selecciona el texto manualmente.")}
+    try{navigator.clipboard.writeText(text).then(function(){toast("Resumen copiado")},fallback)}catch(e){fallback()}
+  }
+  $("digest").addEventListener("click",function(){
+    var l=items().filter(function(i){return i.d<=7});
+    if(!l.length){toast("No hay vencimientos en 7 días");return}
+    var lines=["Vencimientos de los próximos 7 días:"],cur="";
+    l.forEach(function(i){
+      if(i.iso!==cur){cur=i.iso;lines.push("",fmtDate(parse(i.iso)))}
+      lines.push("- "+nm(i.c)+" (RUC "+i.c.ruc+"), periodo "+periodoTxt(i.per));
+    });
+    copy(lines.join("\n"));
+  });
+
+  /* ---------- mensaje ---------- */
+  $("tpl").addEventListener("input",function(e){S.tpl=e.target.value||TPL_DEFAULT;renderAgenda(items());renderQueue()});
+  $("tpl-save").addEventListener("click",function(){
+    busy($("tpl-save"),A.saveProfile(S.profile,S.tpl).then(function(){setMsg("m-tpl","Mensaje guardado.","ok")}).catch(function(e){setMsg("m-tpl",tr(e),"bad")}));
+  });
+  $("tpl-reset").addEventListener("click",function(){S.tpl=TPL_DEFAULT;$("tpl").value=TPL_DEFAULT;renderAgenda(items());renderQueue();setMsg("m-tpl","Texto original restaurado. Pulsa Guardar mensaje para conservarlo.","")});
+
+  /* ---------- configuración: titular y cuenta ---------- */
+  var PF={titular:"pf-titular",cargo:"pf-cargo",cole:"pf-cole",estudio:"pf-estudio",ruc:"pf-ruc",phone:"pf-phone",email:"pf-email",dir:"pf-dir"};
+  function fillProfile(){Object.keys(PF).forEach(function(k){$(PF[k]).value=S.profile[k]||""})}
+  $("f-prof").addEventListener("submit",function(e){
+    e.preventDefault();
+    var p={};Object.keys(PF).forEach(function(k){p[k]=$(PF[k]).value.trim()});
+    p.ruc=p.ruc.replace(/\s/g,"");p.phone=p.phone.replace(/\s/g,"");
+    if(!p.titular){setMsg("m-prof","Escribe el nombre del titular.","bad");return}
+    if(!p.estudio){setMsg("m-prof","Escribe el nombre del estudio.","bad");return}
+    if(p.ruc&&!validRuc(p.ruc)){setMsg("m-prof","El RUC del estudio no es válido.","bad");return}
+    if(p.phone&&!/^9\d{8}$/.test(p.phone)){setMsg("m-prof","El celular debe tener 9 dígitos y empezar con 9.","bad");return}
+    if(p.email&&!okEmail(p.email)){setMsg("m-prof","El correo de contacto no parece válido.","bad");return}
+    busy(e.target.querySelector("button.primary"),A.saveProfile(p,S.tpl).then(function(){
+      S.profile=p;render();setMsg("m-prof","Datos guardados.","ok");
+    }).catch(function(er){setMsg("m-prof",tr(er),"bad")}));
+  });
+  $("f-newmail").addEventListener("submit",function(e){
+    e.preventDefault();var v=$("a-email").value.trim().toLowerCase();
+    if(!okEmail(v)){setMsg("m-mail","Escribe un correo válido.","bad");return}
+    if(S.user&&v===S.user.email){setMsg("m-mail","Ese ya es tu correo de acceso.","bad");return}
+    busy(e.target.querySelector("button"),A.setEmail(v).then(function(r){
+      if(r.pending)setMsg("m-mail","Te enviamos un correo de confirmación a la dirección nueva. El cambio se aplica al abrir ese enlace.","ok");
+      else{S.user={id:v,email:v};render();setMsg("m-mail","Correo de acceso actualizado.","ok")}
+      $("a-email").value="";
+    }).catch(function(er){setMsg("m-mail",tr(er),"bad")}));
+  });
+  $("f-newpass").addEventListener("submit",function(e){
+    e.preventDefault();var a=$("c-pass").value,b=$("c-pass2").value;
+    if(a.length<8){setMsg("m-pass","La contraseña debe tener al menos 8 caracteres.","bad");return}
+    if(a!==b){setMsg("m-pass","Las dos contraseñas no coinciden.","bad");return}
+    busy(e.target.querySelector("button"),A.setPassword(a).then(function(){
+      $("c-pass").value="";$("c-pass2").value="";setMsg("m-pass","Contraseña actualizada.","ok");
+    }).catch(function(er){setMsg("m-pass",tr(er),"bad")}));
+  });
+
+  /* ---------- acceso: ingresar, registrarse, recuperar ---------- */
+  var VIEWS=["login","reg","forgot","new"];
+  function showAuth(view){
+    $("boot").hidden=true;$("app").hidden=true;$("auth").hidden=false;appShown=false;
+    VIEWS.forEach(function(v){$("f-"+v).hidden=v!==view});
+    $("demo-note").hidden=!DEMO;
+    var f={login:"l-email",reg:"r-email",forgot:"p-email","new":"n-pass"}[view];
+    if($(f))try{$(f).focus()}catch(e){}
+  }
+  $("go-forgot").addEventListener("click",function(){setMsg("m-forgot","");$("sim-link").hidden=true;$("p-email").value=$("l-email").value;showAuth("forgot")});
+  $("go-reg").addEventListener("click",function(){setMsg("m-reg","");showAuth("reg")});
+  $("go-login1").addEventListener("click",function(){showAuth("login")});
+  $("go-login2").addEventListener("click",function(){showAuth("login")});
+
+  $("f-login").addEventListener("submit",function(e){
+    e.preventDefault();var em=$("l-email").value.trim().toLowerCase(),pw=$("l-pass").value;
+    if(!okEmail(em)||!pw){setMsg("m-login","Escribe tu correo y tu contraseña.","bad");return}
+    setMsg("m-login","");
+    busy(e.target.querySelector("button.primary"),A.signIn(em,pw).then(function(){$("l-pass").value=""}).catch(function(er){setMsg("m-login",tr(er),"bad")}));
+  });
+  $("f-reg").addEventListener("submit",function(e){
+    e.preventDefault();var em=$("r-email").value.trim().toLowerCase(),a=$("r-pass").value,b=$("r-pass2").value;
+    if(!okEmail(em)){setMsg("m-reg","Escribe un correo válido.","bad");return}
+    if(a.length<8){setMsg("m-reg","La contraseña debe tener al menos 8 caracteres.","bad");return}
+    if(a!==b){setMsg("m-reg","Las dos contraseñas no coinciden.","bad");return}
+    setMsg("m-reg","");
+    busy(e.target.querySelector("button.primary"),A.signUp(em,a).then(function(r){
+      if(r.needsConfirm){
+        showAuth("login");$("l-email").value=em;
+        setMsg("m-login","Cuenta creada. Te enviamos un correo: abre el enlace para confirmarla y luego ingresa.","ok");
+      }
+    }).catch(function(er){setMsg("m-reg",tr(er),"bad")}));
+  });
+  $("f-forgot").addEventListener("submit",function(e){
+    e.preventDefault();var em=$("p-email").value.trim().toLowerCase();
+    if(!okEmail(em)){setMsg("m-forgot","Escribe un correo válido.","bad");return}
+    busy(e.target.querySelector("button.primary"),A.reset(em).then(function(){
+      setMsg("m-forgot","Si ese correo tiene una cuenta, recibirás un enlace para crear una contraseña nueva. Revisa también la carpeta de spam.","ok");
+      if(DEMO)$("sim-link").hidden=false;
+    }).catch(function(er){setMsg("m-forgot",tr(er),"bad")}));
+  });
+  $("sim-link").addEventListener("click",function(){Demo.simulateLink()});
+  $("f-new").addEventListener("submit",function(e){
+    e.preventDefault();var a=$("n-pass").value,b=$("n-pass2").value;
+    if(a.length<8){setMsg("m-new","La contraseña debe tener al menos 8 caracteres.","bad");return}
+    if(a!==b){setMsg("m-new","Las dos contraseñas no coinciden.","bad");return}
+    busy(e.target.querySelector("button.primary"),A.setPassword(a).then(function(){
+      recovering=false;$("n-pass").value="";$("n-pass2").value="";
+      enterApp(S.user||recUser,true);
+    }).catch(function(er){setMsg("m-new",tr(er),"bad")}));
+  });
+  $("logout").addEventListener("click",function(){busy($("logout"),A.signOut().catch(function(er){toast(tr(er))}))});
+
+  var recUser=null;
+  function enterApp(user,afterReset){
+    S.user=user;$("boot").hidden=false;$("auth").hidden=true;$("app").hidden=true;
+    A.loadAll().then(function(d){
+      S.profile=d.profile||{};S.tpl=d.tpl||TPL_DEFAULT;S.clients=d.clients||[];S.sent=d.sent||{};
+      S.clients.sort(function(a,b){return a.name.localeCompare(b.name)});
+      sel={};queue={active:false,items:[],i:0};editingId=null;confirmDel=null;
+      fillProfile();$("tpl").value=S.tpl;stopEdit();
+      $("boot").hidden=true;$("auth").hidden=true;$("app").hidden=false;appShown=true;
+      $("demo-chip").hidden=!DEMO;
+      render();
+      try{if(!DEMO&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+      if(!S.profile.titular){showTab("cf");toast("Completa los datos del titular")}
+      else showTab("ag");
+      if(afterReset)toast("Contraseña actualizada");
+    }).catch(function(er){
+      showAuth("login");setMsg("m-login",tr(er),"bad");
+    });
+  }
+  function onAuth(ev,user,err){
+    if(ev==="error"){showAuth("login");setMsg("m-login",tr(err),"bad");return}
+    if(ev==="recovery"){recovering=true;recUser=user;S.user=user;showAuth("new");return}
+    if(ev==="in"){
+      if(recovering)return;
+      if(appShown&&S.user&&user&&S.user.id===user.id)return;
+      enterApp(user);return;
+    }
+    if(ev==="out"){
+      S.user=null;recovering=false;S.clients=[];S.sent={};S.profile={};
+      showAuth(linkErr?"forgot":"login");
+      if(linkErr){setMsg("m-forgot","El enlace venció o ya se usó. Escribe tu correo y pide uno nuevo.","bad");linkErr=false}
+    }
+  }
+
+  if(!DEMO){
+    if(/type=recovery/.test(location.hash))recovering=true;
+    if(/error_code=otp_expired|error=access_denied/.test(location.hash))linkErr=true;
+  }
+  A.init(onAuth);
+})();
+</script>
+</body>
+</html>
